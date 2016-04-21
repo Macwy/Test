@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="Amp"
+  id="myeclipse.1461201532831"
+  context-root="/Amp"
+  j2ee-spec="5.0"
+  archive="Amp.war">
+  <attributes>
+    <attribute name="webrootdir" value="WebRoot" />
+  </attributes>
+</project-module>
+

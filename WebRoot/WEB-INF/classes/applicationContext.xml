@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:p="http://www.springframework.org/schema/p"  
+       xsi:schemaLocation="
+       		http://www.springframework.org/schema/beans
+           	http://www.springframework.org/schema/beans/spring-beans.xsd
+           	http://www.springframework.org/schema/context
+        	http://www.springframework.org/schema/context/spring-context.xsd
+        	http://www.springframework.org/schema/tx
+        	http://www.springframework.org/schema/tx/spring-tx.xsd
+        	http://www.springframework.org/schema/aop
+        	http://www.springframework.org/schema/aop/spring-aop.xsd
+        	http://www.springframework.org/schema/mvc
+		    http://www.springframework.org/schema/mvc/spring-mvc.xsd"
+		    >
+		    
+    <context:component-scan base-package="com.daoyin"/>
+    
+	<mvc:resources location="/static/" mapping="/static/**"/>
+	 
+	<mvc:annotation-driven />		
+	
+	<context:property-placeholder location="classpath:jdbc.properties,classpath:hibernate.properties" />
+	
+	<bean  name="viewClass" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<!-- 文件上传 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" p:defaultEncoding="UTF-8" />
+	
+	<!-- controller 返回JSON数据  -->
+		<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+			<property name="messageConverters">
+				<list>
+					<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
+				</list>
+			</property>
+		</bean>	
+	
+	
+	
+	<bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="${jdbc.driverClass}" />
+		<property name="jdbcUrl" value="${jdbc.jdbcUrl}" />
+		<property name="user" value="${jdbc.user}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="autoCommitOnClose" value="true"/>
+		<property name="minPoolSize" value="2"/>  
+		<property name="maxPoolSize" value="50"/>  
+		<property name="initialPoolSize" value="3"/>  
+		<property name="acquireIncrement" value="3"/>
+		<property name="acquireRetryAttempts" value="3"/> 
+		 <property name="maxIdleTime" value="60"/>      
+	</bean>
+	
+	<!-- 配置SessionFactory -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="c3p0DataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>com.daoyin.bean</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+				<prop key="hibernate.use_sql_comments">${hibernate.use_sql_comments}</prop>
+			</props>
+		</property>
+	</bean>
+	
+	
+	<bean id="txManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="is*" read-only="true" />
+			<tx:method name="*"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<aop:config>
+		<aop:pointcut expression="execution(* com.daoyin.service.*.*(..))" id="bizMethods"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="bizMethods" />
+	</aop:config>
+</beans>
